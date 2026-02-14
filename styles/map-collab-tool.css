@@ -185,6 +185,8 @@
   height: 100%;
   pointer-events: none;
   z-index: 10;
+  font-size: 14px;
+  line-height: normal;
 }
 
 /* Individual pin */
@@ -222,6 +224,7 @@
 
 .mct-pin-label {
   font-size: 11px;
+  line-height: 1.3;
   color: #fff;
   background: rgba(0, 0, 0, 0.75);
   padding: 2px 6px;
@@ -286,6 +289,7 @@
 
 .mct-text-content {
   font-size: 14px;
+  line-height: 1.4;
   color: var(--pin-color, #ffffff);
   background: rgba(0, 0, 0, 0.7);
   padding: 4px 10px;
