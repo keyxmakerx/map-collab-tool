@@ -22,7 +22,8 @@ export function registerSettings() {
       danger: "Danger",
       treasure: "Treasure",
       quest: "Quest",
-      note: "Note"
+      note: "Note",
+      text: "Text"
     }
   });
 }

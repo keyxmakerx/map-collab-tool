@@ -51,6 +51,23 @@
   background: var(--color-cool-3, #505060);
 }
 
+.mct-toolbar-group button.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+/* Draw color input */
+.mct-draw-color {
+  width: 28px;
+  height: 24px;
+  padding: 1px;
+  border: 1px solid var(--color-border-dark, #555);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+}
+
 /* Viewport */
 .mct-viewport {
   position: relative;
@@ -62,6 +79,14 @@
 
 .mct-viewport:active {
   cursor: grabbing;
+}
+
+.mct-viewport.mct-drawing-mode {
+  cursor: crosshair;
+}
+
+.mct-viewport.mct-drawing-mode:active {
+  cursor: crosshair;
 }
 
 .mct-map-container {
@@ -135,7 +160,24 @@
   background: var(--color-cool-3, #505060);
 }
 
-/* Pins layer */
+/* ─── Drawing Layer ────────────────────────────────────────────── */
+
+.mct-drawing-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.mct-drawing-mode .mct-drawing-layer {
+  pointer-events: auto;
+}
+
+/* ─── Pins Layer ───────────────────────────────────────────────── */
+
 .mct-pins-layer {
   position: absolute;
   top: 0;
@@ -143,6 +185,7 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
+  z-index: 10;
 }
 
 /* Individual pin */
@@ -191,6 +234,22 @@
   text-overflow: ellipsis;
 }
 
+/* Linked pin indicator */
+.mct-pin-linked i::before {
+  text-decoration: underline;
+}
+
+.mct-pin-linked::after {
+  content: "\f0c1"; /* link icon */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 8px;
+  position: absolute;
+  top: 0;
+  right: -6px;
+  color: #60a5fa;
+}
+
 /* Private pin styling */
 .mct-pin-private {
   opacity: 0.6;
@@ -207,7 +266,104 @@
   color: #fbbf24;
 }
 
-/* Pin config dialog */
+/* ─── Text Pin ─────────────────────────────────────────────────── */
+
+.mct-pin-text {
+  transform: translate(-50%, -50%);
+  filter: none;
+}
+
+.mct-pin-text:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.mct-pin-text.mct-pin-dragging,
+.mct-pin-text.mct-pin-dragging:hover {
+  transform: translate(-50%, -50%);
+}
+
+.mct-text-content {
+  font-size: 14px;
+  color: var(--pin-color, #ffffff);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  font-weight: 500;
+}
+
+.mct-pin-text:hover .mct-text-content {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+/* ─── Journal Popup ────────────────────────────────────────────── */
+
+.mct-journal-popup {
+  position: absolute;
+  z-index: 100;
+  background: var(--color-cool-5, #23222a);
+  border: 1px solid var(--color-border-dark, #555);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transform: translate(-50%, -100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  min-width: 140px;
+  pointer-events: auto;
+}
+
+.mct-journal-popup::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--color-cool-5, #23222a);
+}
+
+.mct-journal-popup-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-light-6, #c9c7b8);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mct-journal-popup-title i {
+  color: #60a5fa;
+  font-size: 12px;
+}
+
+.mct-journal-popup-open {
+  background: var(--color-cool-4, #3a3a44);
+  border: 1px solid var(--color-border-dark, #555);
+  color: var(--color-text-light-6, #c9c7b8);
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s;
+}
+
+.mct-journal-popup-open:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* ─── Pin Config Dialog ────────────────────────────────────────── */
+
 .mct-pin-config {
   padding: 10px;
   display: flex;
@@ -240,6 +396,36 @@
   gap: 6px;
   font-size: 13px;
   cursor: pointer;
+}
+
+/* Journal link row */
+.mct-journal-link-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.mct-journal-link-row select {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.mct-clear-journal-link {
+  background: var(--color-cool-4, #3a3a44);
+  border: 1px solid var(--color-border-dark, #555);
+  color: var(--color-text-light-6, #c9c7b8);
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.mct-clear-journal-link:hover {
+  background: #6a2d2d;
+  color: #ef4444;
 }
 
 .mct-pin-config-buttons {

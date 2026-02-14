@@ -12,6 +12,10 @@
   "MCT.MapPage.ZoomReset": "Reset Zoom",
   "MCT.MapPage.SetImage": "Set Map Image",
   "MCT.MapPage.NoImage": "No map image set. Click 'Set Map Image' to add one.",
+  "MCT.MapPage.DrawToggle": "Draw Mode",
+  "MCT.MapPage.DrawColor": "Draw Color",
+  "MCT.MapPage.ClearDrawings": "Clear Drawings",
+  "MCT.MapPage.PermissionsToggle": "Anyone Can Edit",
 
   "MCT.PinConfig.Title": "Edit Pin",
   "MCT.PinConfig.Label": "Label",
@@ -20,6 +24,14 @@
   "MCT.PinConfig.Shared": "Visible to all players",
   "MCT.PinConfig.Save": "Save",
   "MCT.PinConfig.Delete": "Delete",
+  "MCT.PinConfig.LinkedJournal": "Link to Journal",
+  "MCT.PinConfig.NoLink": "-- No Link --",
+  "MCT.PinConfig.ClearLink": "Clear Link",
+
+  "MCT.JournalPopup.Open": "Open Journal",
+
+  "MCT.Notifications.EditingEnabled": "Anyone can now edit items on this map.",
+  "MCT.Notifications.EditingDisabled": "Only the GM and item creators can edit.",
 
   "MCT.Settings.EnableForPlayers.Name": "Enable for Players",
   "MCT.Settings.EnableForPlayers.Hint": "Allow players to add and edit their own pins on collaborative maps.",

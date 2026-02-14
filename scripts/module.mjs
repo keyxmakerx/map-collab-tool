@@ -19,7 +19,8 @@ export const DEFAULT_PIN_TYPES = [
   { id: "danger", label: "Danger", icon: "fa-skull-crossbones", color: "#ef4444" },
   { id: "treasure", label: "Treasure", icon: "fa-gem", color: "#f59e0b" },
   { id: "quest", label: "Quest", icon: "fa-scroll", color: "#8b5cf6" },
-  { id: "note", label: "Note", icon: "fa-note-sticky", color: "#6b7280" }
+  { id: "note", label: "Note", icon: "fa-note-sticky", color: "#6b7280" },
+  { id: "text", label: "Text", icon: "fa-font", color: "#ffffff" }
 ];
 
 Hooks.once("init", () => {
