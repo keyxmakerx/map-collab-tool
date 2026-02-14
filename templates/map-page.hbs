@@ -10,13 +10,13 @@
       </select>
     </div>
     <div class="mct-toolbar-group">
-      <button type="button" class="mct-zoom-in" title="{{localize "MCT.MapPage.ZoomIn"}}">
+      <button type="button" class="mct-zoom-in" title="{{localize "MCT.MapPage.ZoomIn"}}" aria-label="{{localize "MCT.MapPage.ZoomIn"}}">
         <i class="fa-solid fa-magnifying-glass-plus"></i>
       </button>
-      <button type="button" class="mct-zoom-out" title="{{localize "MCT.MapPage.ZoomOut"}}">
+      <button type="button" class="mct-zoom-out" title="{{localize "MCT.MapPage.ZoomOut"}}" aria-label="{{localize "MCT.MapPage.ZoomOut"}}">
         <i class="fa-solid fa-magnifying-glass-minus"></i>
       </button>
-      <button type="button" class="mct-zoom-reset" title="{{localize "MCT.MapPage.ZoomReset"}}">
+      <button type="button" class="mct-zoom-reset" title="{{localize "MCT.MapPage.ZoomReset"}}" aria-label="{{localize "MCT.MapPage.ZoomReset"}}">
         <i class="fa-solid fa-compress"></i>
       </button>
     </div>
@@ -34,7 +34,7 @@
     <div class="mct-map-layer" style="transform: translate({{panX}}px, {{panY}}px) scale({{zoom}});">
       {{#if mapImage}}
       <div class="mct-map-image-wrapper">
-        <img class="mct-map-image" src="{{mapImage}}" draggable="false" />
+        <img class="mct-map-image" src="{{mapImage}}" alt="Map" draggable="false" />
         {{!-- Pin overlay (sized to the image) --}}
         <div class="mct-pins-layer">
           {{#each pins}}
