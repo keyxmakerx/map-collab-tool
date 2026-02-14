@@ -57,7 +57,11 @@
   flex: 1;
   overflow: hidden;
   background: #1a1a2e;
-  cursor: crosshair;
+  cursor: grab;
+}
+
+.mct-viewport:active {
+  cursor: grabbing;
 }
 
 .mct-map-container {
@@ -69,17 +73,21 @@
 /* Map layer (zoomable/pannable) */
 .mct-map-layer {
   position: relative;
-  transform-origin: center center;
+  transform-origin: 0 0;
   display: inline-block;
-  min-width: 100%;
-  min-height: 100%;
+}
+
+.mct-map-image-wrapper {
+  position: relative;
+  display: inline-block;
 }
 
 .mct-map-image {
   display: block;
-  max-width: 100%;
+  max-width: none;
   user-select: none;
   -webkit-user-drag: none;
+  cursor: crosshair;
 }
 
 /* Empty state */
