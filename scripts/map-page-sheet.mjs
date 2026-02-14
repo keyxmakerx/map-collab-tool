@@ -132,14 +132,12 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         this.#applyTransform(mapLayer);
       }
 
-      // Handle pin dragging — convert screen-pixel delta to percentage using
-      // untransformed layout dimensions (offsetWidth/Height) and known zoom,
-      // avoiding getBoundingClientRect which can be skewed by ancestor transforms.
+      // Handle pin dragging — use pins-layer rect (the element pin % resolves against)
       if (this.#dragPin && this.#dragPinEl) {
-        const pinsLayer = mapLayer.querySelector(".mct-pins-layer");
-        if (!pinsLayer || !pinsLayer.offsetWidth || !pinsLayer.offsetHeight) return;
-        const dx = ((e.clientX - this.#dragStartX) / this.#zoom / pinsLayer.offsetWidth) * 100;
-        const dy = ((e.clientY - this.#dragStartY) / this.#zoom / pinsLayer.offsetHeight) * 100;
+        const rect = mapLayer.querySelector(".mct-pins-layer")?.getBoundingClientRect();
+        if (!rect || !rect.width || !rect.height) return;
+        const dx = ((e.clientX - this.#dragStartX) / rect.width) * 100;
+        const dy = ((e.clientY - this.#dragStartY) / rect.height) * 100;
         const x = Math.max(0, Math.min(100, this.#dragPinStartX + dx));
         const y = Math.max(0, Math.min(100, this.#dragPinStartY + dy));
         this.#dragPinEl.style.left = `${x}%`;
@@ -150,10 +148,10 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
     viewport.addEventListener("pointerup", async (e) => {
       // Finish pin drag
       if (this.#dragPin) {
-        const pinsLayer = mapLayer.querySelector(".mct-pins-layer");
-        if (pinsLayer && pinsLayer.offsetWidth && pinsLayer.offsetHeight) {
-          const dx = ((e.clientX - this.#dragStartX) / this.#zoom / pinsLayer.offsetWidth) * 100;
-          const dy = ((e.clientY - this.#dragStartY) / this.#zoom / pinsLayer.offsetHeight) * 100;
+        const rect = mapLayer.querySelector(".mct-pins-layer")?.getBoundingClientRect();
+        if (rect && rect.width && rect.height) {
+          const dx = ((e.clientX - this.#dragStartX) / rect.width) * 100;
+          const dy = ((e.clientY - this.#dragStartY) / rect.height) * 100;
           const x = Math.max(0, Math.min(100, this.#dragPinStartX + dx));
           const y = Math.max(0, Math.min(100, this.#dragPinStartY + dy));
           await this.#movePin(this.#dragPin, x, y);
@@ -306,12 +304,14 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
 
   async #movePin(pinId, x, y) {
     try {
+      const rx = Math.round(x * 100) / 100;
+      const ry = Math.round(y * 100) / 100;
       const pins = (this.document.getFlag(MODULE_ID, "pins") || []).map(p => {
         if (p.id !== pinId) return p;
-        return { ...p, x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 };
+        return { ...p, x: rx, y: ry };
       });
       await this.document.setFlag(MODULE_ID, "pins", pins);
-      this.#getSocket()?.emit("pinMoved", { pageId: this.document.id, pinId, x, y });
+      this.#getSocket()?.emit("pinMoved", { pageId: this.document.id, pinId, x: rx, y: ry });
     } catch (err) {
       ui.notifications.error("Failed to move pin.");
       console.error("MCT | movePin error:", err);
