@@ -188,6 +188,18 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
       }
     });
 
+    // Debug: log element dimensions so we can compare across clients
+    const dbgImg = mapLayer.querySelector(".mct-map-image");
+    const dbgPins = mapLayer.querySelector(".mct-pins-layer");
+    if (dbgImg && dbgPins) {
+      const ir = dbgImg.getBoundingClientRect();
+      const pr = dbgPins.getBoundingClientRect();
+      console.debug("MCT | render — image rect:", ir.width.toFixed(1), "×", ir.height.toFixed(1),
+        "| pins-layer rect:", pr.width.toFixed(1), "×", pr.height.toFixed(1),
+        "| offset:", dbgPins.offsetWidth, "×", dbgPins.offsetHeight,
+        "| zoom:", this.#zoom);
+    }
+
     // Pin interactions (drag + right-click)
     this.#setupPinListeners(mapLayer, viewport);
 
@@ -306,6 +318,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
     try {
       const rx = Math.round(x * 100) / 100;
       const ry = Math.round(y * 100) / 100;
+      console.debug("MCT | movePin →", pinId, "to", rx, ry);
       const pins = (this.document.getFlag(MODULE_ID, "pins") || []).map(p => {
         if (p.id !== pinId) return p;
         return { ...p, x: rx, y: ry };
@@ -385,6 +398,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
     };
     this.#boundSocketHandlers.pinMoved = (payload) => {
       if (payload.pageId !== pageId) return;
+      console.debug("MCT | socket pinMoved received →", payload.pinId, "to", payload.x, payload.y);
       // Live-move the pin in the DOM without full re-render
       const pinEl = this.element?.querySelector(`[data-pin-id="${payload.pinId}"]`);
       if (pinEl) {
