@@ -1,69 +1,249 @@
-/* ─── Collaborative Map Tool Styles ──────────────────────────────── */
+/* ─── Collaborative Map Tool ─────────────────────────────────────── */
 
-/* Color Picker Application */
-.mct-color-picker {
-  padding: 8px;
+/* Map Sheet Window */
+.mct-map-sheet {
+  min-width: 500px;
+  min-height: 400px;
 }
 
-.mct-palette {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.mct-color-swatch {
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  transition: border-color 0.15s, transform 0.15s;
-}
-
-.mct-color-swatch:hover {
-  border-color: rgba(255, 255, 255, 0.6);
-  transform: scale(1.1);
-}
-
-.mct-color-swatch.active {
-  border-color: #ffffff;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
-}
-
-.mct-custom-color {
+/* Toolbar */
+.mct-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 12px;
+  padding: 6px 10px;
+  background: var(--color-cool-5, #23222a);
+  border-bottom: 1px solid var(--color-border-dark, #333);
+  flex-wrap: wrap;
 }
 
-.mct-custom-color label {
+.mct-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mct-toolbar-group label {
   font-size: 12px;
   color: var(--color-text-light-6, #c9c7b8);
+  white-space: nowrap;
 }
 
-.mct-custom-color input[type="color"] {
-  width: 48px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
+.mct-toolbar-group select {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.mct-toolbar-group button {
+  background: var(--color-cool-4, #3a3a44);
+  border: 1px solid var(--color-border-dark, #555);
+  color: var(--color-text-light-6, #c9c7b8);
+  border-radius: 4px;
+  padding: 4px 8px;
   cursor: pointer;
-  background: none;
+  font-size: 12px;
+  line-height: 1;
+  transition: background 0.15s;
 }
 
-.mct-stroke-width {
+.mct-toolbar-group button:hover {
+  background: var(--color-cool-3, #505060);
+}
+
+/* Viewport */
+.mct-viewport {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: #1a1a2e;
+  cursor: crosshair;
+}
+
+.mct-map-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Map layer (zoomable/pannable) */
+.mct-map-layer {
+  position: relative;
+  transform-origin: center center;
+  display: inline-block;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.mct-map-image {
+  display: block;
+  max-width: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Empty state */
+.mct-no-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--color-text-light-6, #888);
+  gap: 12px;
+}
+
+.mct-no-image i {
+  font-size: 64px;
+  opacity: 0.3;
+}
+
+.mct-no-image p {
+  font-size: 16px;
+  opacity: 0.6;
+}
+
+.mct-no-image button {
+  background: var(--color-cool-4, #3a3a44);
+  border: 1px solid var(--color-border-dark, #555);
+  color: var(--color-text-light-6, #c9c7b8);
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.mct-no-image button:hover {
+  background: var(--color-cool-3, #505060);
+}
+
+/* Pins layer */
+.mct-pins-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Individual pin */
+.mct-pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+  transition: transform 0.1s ease;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+
+.mct-pin:hover {
+  transform: translate(-50%, -100%) scale(1.2);
+  z-index: 20;
+}
+
+.mct-pin i {
+  font-size: 24px;
+  color: var(--pin-color, #6b7280);
+}
+
+.mct-pin-label {
+  font-size: 10px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  margin-top: 2px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Private pin styling */
+.mct-pin-private {
+  opacity: 0.6;
+}
+
+.mct-pin-private i::after {
+  content: "\f023"; /* lock icon */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 8px;
+  position: absolute;
+  bottom: -2px;
+  right: -4px;
+  color: #fbbf24;
+}
+
+/* Pin config dialog */
+.mct-pin-config {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mct-pin-config .form-group {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.mct-stroke-width label {
+.mct-pin-config .form-group label {
   font-size: 12px;
+  font-weight: 600;
   color: var(--color-text-light-6, #c9c7b8);
 }
 
-.mct-stroke-width input[type="range"] {
-  width: 100%;
+.mct-pin-config .form-group input[type="text"],
+.mct-pin-config .form-group select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.mct-pin-config .checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mct-pin-config-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.mct-pin-config-buttons button {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--color-border-dark, #555);
+}
+
+.mct-save-pin {
+  background: var(--color-cool-4, #3a3a44);
+  color: var(--color-text-light-6, #c9c7b8);
+}
+
+.mct-save-pin:hover {
+  background: #2d6a2d;
+}
+
+.mct-delete-pin {
+  background: var(--color-cool-4, #3a3a44);
+  color: #ef4444;
+}
+
+.mct-delete-pin:hover {
+  background: #6a2d2d;
 }

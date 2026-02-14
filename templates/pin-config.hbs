@@ -1,0 +1,31 @@
+<form class="mct-pin-config" autocomplete="off">
+  <div class="form-group">
+    <label>{{localize "MCT.PinConfig.Label"}}</label>
+    <input type="text" name="label" value="{{label}}" placeholder="{{localize "MCT.PinConfig.LabelPlaceholder"}}" autofocus />
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "MCT.PinConfig.Type"}}</label>
+    <select name="type">
+      {{#each pinTypes}}
+      <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label class="checkbox">
+      <input type="checkbox" name="shared" {{#if shared}}checked{{/if}} />
+      {{localize "MCT.PinConfig.Shared"}}
+    </label>
+  </div>
+
+  <div class="mct-pin-config-buttons">
+    <button type="submit" class="mct-save-pin">
+      <i class="fa-solid fa-check"></i> {{localize "MCT.PinConfig.Save"}}
+    </button>
+    <button type="button" class="mct-delete-pin">
+      <i class="fa-solid fa-trash"></i> {{localize "MCT.PinConfig.Delete"}}
+    </button>
+  </div>
+</form>

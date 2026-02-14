@@ -1,48 +1,50 @@
 # Collaborative Map Tool
 
-A system-agnostic Foundry VTT v13 module that enables real-time collaborative drawing and annotation on the shared battle map.
+A system-agnostic Foundry VTT v13 module that provides interactive map journal pages with collaborative pin placement. Players can open a map, place pins of different types, drag them around, and share or keep them private.
 
 ## Features
 
-- **Real-time collaborative drawing** — All connected players see each other's strokes as they draw
-- **Player cursors** — See where other players are pointing on the map
-- **Ping** — Click to ping a location, visible to all players with an animated ring
-- **Drawing tools** — Freehand, rectangle, ellipse, line, and text annotations
-- **Per-player colors** — Each player draws in their own color (defaults to their Foundry user color)
-- **Persistence** — Finished drawings are saved as Foundry DrawingDocuments so they survive page reloads
-- **System agnostic** — Works with any game system (D&D 5e, Pathfinder, Fate, etc.)
-- **GM controls** — GM can clear all drawings; players can clear their own
+- **Interactive map journal pages** — Add a "Map" page type to any journal entry with a custom image
+- **Drag-and-drop pins** — Click to place pins, drag to reposition, right-click to edit or delete
+- **5 built-in pin types** — Location, Danger, Treasure, Quest, and Note — each with a distinct icon and color
+- **Private & shared pins** — Players can mark pins as private (only visible to them) or shared (visible to all)
+- **Real-time sync** — Pin changes broadcast to all connected clients via sockets
+- **Zoom & pan** — Mouse wheel to zoom, middle-click drag to pan large maps
+- **Permission controls** — GM can toggle whether players are allowed to place pins
+- **System agnostic** — Works with any game system
 
 ## Installation
 
-1. In Foundry VTT, go to **Settings → Add-on Modules → Install Module**
+1. In Foundry VTT, go to **Settings > Add-on Modules > Install Module**
 2. Paste the manifest URL or install from the package browser
 3. Enable the module in your world's module settings
 
 ## Usage
 
-1. Activate the **Collaboration Tools** control group in the left sidebar (users icon)
-2. Select a drawing tool:
-   - **Pointer** — Click to ping a location
-   - **Freehand** — Click and drag to draw freely
-   - **Rectangle** — Click and drag to draw a rectangle
-   - **Ellipse** — Click and drag to draw an ellipse
-   - **Line** — Click and drag to draw a straight line
-   - **Text** — Click to place a text annotation
-3. Use the **Eraser** button to clear your own drawings
-4. GM can use the **Trash** button to clear all collaborative drawings
+1. Create a new **Journal Entry** (or open an existing one)
+2. Add a new page and select the **Map** type
+3. Click **Set Map Image** to upload or pick a map image
+4. **Left-click** on the map to place a pin of the selected type
+5. **Drag** pins to reposition them
+6. **Right-click** a pin to edit its label, type, or visibility — or delete it
+7. Use the toolbar to switch pin types and zoom in/out
 
 ## Configuration
 
-Module settings are available under **Settings → Module Settings → Collaborative Map Tool**:
-
 | Setting | Scope | Default | Description |
 |---|---|---|---|
-| Enable for Players | World | `true` | Allow non-GM users to use the tools |
-| Show Player Cursors | World | `true` | Display remote player cursors |
-| Default Draw Color | Client | User color | Override drawing color |
-| Stroke Width | Client | `4` | Line thickness in pixels |
-| Persist Drawings | World | `true` | Save as DrawingDocuments |
+| Enable for Players | World | `true` | Allow players to add and edit their own pins |
+| Default Pin Type | Client | `Note` | Default pin type when placing new pins |
+
+## Pin Types
+
+| Type | Icon | Color | Use Case |
+|---|---|---|---|
+| Location | Map pin | Blue | Towns, landmarks, points of interest |
+| Danger | Skull | Red | Hostile areas, traps, warnings |
+| Treasure | Gem | Amber | Loot, hidden caches, rewards |
+| Quest | Scroll | Purple | Quest objectives, NPC locations |
+| Note | Sticky note | Gray | General annotations |
 
 ## Architecture
 
@@ -50,26 +52,19 @@ Module settings are available under **Settings → Module Settings → Collabora
 map-collab-tool/
 ├── module.json              # Foundry module manifest
 ├── scripts/
-│   ├── module.mjs           # Entry point, hooks, initialization
-│   ├── collaboration-layer.mjs  # Custom InteractionLayer for drawing
+│   ├── module.mjs           # Entry point, hooks, page type registration
+│   ├── map-page-sheet.mjs   # Custom JournalPageSheet for the map viewer
+│   ├── pin-config.mjs       # ApplicationV2 dialog for editing pins
 │   ├── socket-manager.mjs   # Real-time socket communication
-│   ├── scene-controls.mjs   # v13 scene control buttons
-│   ├── color-picker-app.mjs # ApplicationV2 color picker
 │   └── settings.mjs         # Module settings registration
 ├── styles/
 │   └── map-collab-tool.css  # UI styles
 ├── templates/
-│   └── color-picker.hbs     # Color picker template
+│   ├── map-page.hbs         # Map viewer template
+│   └── pin-config.hbs       # Pin edit dialog template
 └── lang/
     └── en.json              # English translations
 ```
-
-### Key Technical Decisions
-
-- **Custom `InteractionLayer`** registered via `CONFIG.Canvas.layers` — provides a dedicated drawing surface that doesn't conflict with Foundry's built-in Drawing layer
-- **Socket.io** via `game.socket` with the `module.map-collab-tool` namespace — broadcasts ephemeral state (cursors, in-progress strokes) for real-time feel
-- **`DrawingDocument`** via `Scene.createEmbeddedDocuments` — persists finished drawings using Foundry's built-in document system, which automatically syncs to all clients
-- **v13 object-based scene controls** — uses the new `getSceneControlButtons` API where controls are objects keyed by name
 
 ## Compatibility
 
