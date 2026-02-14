@@ -3,19 +3,12 @@ import { DEFAULT_PIN_TYPES } from "./module.mjs";
 
 const MODULE_ID = "map-collab-tool";
 
-export class MapPageSheet extends foundry.applications.sheets.journal.JournalEntryPageSheet {
+const { HandlebarsApplicationMixin } = foundry.applications.api;
+
+export class MapPageSheet extends HandlebarsApplicationMixin(foundry.applications.sheets.journal.JournalEntryPageSheet) {
 
   static DEFAULT_OPTIONS = {
-    classes: ["mct-map-sheet"],
-    actions: {
-      zoomIn: MapPageSheet.#onZoomIn,
-      zoomOut: MapPageSheet.#onZoomOut,
-      zoomReset: MapPageSheet.#onZoomReset,
-      setImage: MapPageSheet.#onSetImage
-    },
-    form: {
-      submitOnChange: false
-    }
+    classes: ["mct-map-sheet"]
   };
 
   static PARTS = {
@@ -207,6 +200,10 @@ export class MapPageSheet extends foundry.applications.sheets.journal.JournalEnt
     super._onClose(options);
   }
 
+  _onCloseView() {
+    this.#teardownSocket();
+  }
+
   #applyTransform(mapLayer) {
     mapLayer.style.transform = `scale(${this.#zoom}) translate(${this.#panX}px, ${this.#panY}px)`;
   }
@@ -329,6 +326,7 @@ export class MapPageSheet extends foundry.applications.sheets.journal.JournalEnt
   }
 
   #setupSocket() {
+    this.#teardownSocket();
     const socket = this.#getSocket();
     if (!socket) return;
     this.#socketManager = socket;
@@ -373,25 +371,4 @@ export class MapPageSheet extends foundry.applications.sheets.journal.JournalEnt
     this.#socketManager = null;
   }
 
-  // Action handlers
-  static #onZoomIn() {
-    this.#zoom = Math.min(5, this.#zoom + 0.2);
-    this.#applyTransform(this.element.querySelector(".mct-map-layer"));
-  }
-
-  static #onZoomOut() {
-    this.#zoom = Math.max(0.2, this.#zoom - 0.2);
-    this.#applyTransform(this.element.querySelector(".mct-map-layer"));
-  }
-
-  static #onZoomReset() {
-    this.#zoom = 1;
-    this.#panX = 0;
-    this.#panY = 0;
-    this.#applyTransform(this.element.querySelector(".mct-map-layer"));
-  }
-
-  static async #onSetImage() {
-    this.#pickImage();
-  }
 }
