@@ -24,6 +24,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
   #panStartX = 0;
   #panStartY = 0;
   #dragPin = null;
+  #dragPinEl = null;
   #dragStartX = 0;
   #dragStartY = 0;
   #socketManager = null;
@@ -108,6 +109,9 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         // Don't start a pan if we're dragging a pin
         if (this.#dragPin) return;
 
+        // Don't intercept clicks on interactive elements (buttons, selects, etc.)
+        if (e.target.closest("button, a, select, input")) return;
+
         e.preventDefault();
         this.#isPanning = true;
         this.#panStartX = e.clientX - this.#panX;
@@ -127,16 +131,13 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
       }
 
       // Handle pin dragging
-      if (this.#dragPin) {
+      if (this.#dragPin && this.#dragPinEl) {
         const rect = mapLayer.querySelector(".mct-map-image")?.getBoundingClientRect();
         if (!rect) return;
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
-        const pinEl = mapLayer.querySelector(`[data-pin-id="${this.#dragPin}"]`);
-        if (pinEl) {
-          pinEl.style.left = `${Math.max(0, Math.min(100, x))}%`;
-          pinEl.style.top = `${Math.max(0, Math.min(100, y))}%`;
-        }
+        this.#dragPinEl.style.left = `${Math.max(0, Math.min(100, x))}%`;
+        this.#dragPinEl.style.top = `${Math.max(0, Math.min(100, y))}%`;
       }
     });
 
@@ -150,6 +151,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
           await this.#movePin(this.#dragPin, x, y);
         }
         this.#dragPin = null;
+        this.#dragPinEl = null;
         return;
       }
 
@@ -234,6 +236,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         if (!this.#canEditPin(pin)) return;
 
         this.#dragPin = pinId;
+        this.#dragPinEl = pinEl;
         this.#dragStartX = e.clientX;
         this.#dragStartY = e.clientY;
       });
@@ -264,7 +267,6 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
   async #addPin(x, y) {
     const select = this.element.querySelector(".mct-pin-type-select");
     const pinTypeId = select?.value || game.settings.get(MODULE_ID, "defaultPinType") || "note";
-    const pinType = this.#getPinTypesMap().get(pinTypeId);
 
     const pin = {
       id: foundry.utils.randomID(),
@@ -276,41 +278,54 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
       createdBy: game.user.id
     };
 
-    const pins = [...(this.document.getFlag(MODULE_ID, "pins") || []), pin];
-    await this.document.setFlag(MODULE_ID, "pins", pins);
-
-    // Broadcast to others
-    this.#getSocket()?.emit("pinAdded", { pageId: this.document.id, pin });
-
-    // Open config dialog for the new pin
-    this.#openPinConfig(pin);
+    try {
+      const pins = [...(this.document.getFlag(MODULE_ID, "pins") || []), pin];
+      await this.document.setFlag(MODULE_ID, "pins", pins);
+      this.#getSocket()?.emit("pinAdded", { pageId: this.document.id, pin });
+      this.#openPinConfig(pin);
+    } catch (err) {
+      ui.notifications.error("Failed to add pin.");
+      console.error("MCT | addPin error:", err);
+    }
   }
 
   async #movePin(pinId, x, y) {
-    const pins = (this.document.getFlag(MODULE_ID, "pins") || []).map(p => {
-      if (p.id !== pinId) return p;
-      return { ...p, x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 };
-    });
-    await this.document.setFlag(MODULE_ID, "pins", pins);
-
-    this.#getSocket()?.emit("pinMoved", { pageId: this.document.id, pinId, x, y });
+    try {
+      const pins = (this.document.getFlag(MODULE_ID, "pins") || []).map(p => {
+        if (p.id !== pinId) return p;
+        return { ...p, x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 };
+      });
+      await this.document.setFlag(MODULE_ID, "pins", pins);
+      this.#getSocket()?.emit("pinMoved", { pageId: this.document.id, pinId, x, y });
+    } catch (err) {
+      ui.notifications.error("Failed to move pin.");
+      console.error("MCT | movePin error:", err);
+    }
   }
 
   async #updatePin(updatedPin) {
-    const pins = (this.document.getFlag(MODULE_ID, "pins") || []).map(p => {
-      if (p.id !== updatedPin.id) return p;
-      return updatedPin;
-    });
-    await this.document.setFlag(MODULE_ID, "pins", pins);
-
-    this.#getSocket()?.emit("pinUpdated", { pageId: this.document.id, pin: updatedPin });
+    try {
+      const pins = (this.document.getFlag(MODULE_ID, "pins") || []).map(p => {
+        if (p.id !== updatedPin.id) return p;
+        return updatedPin;
+      });
+      await this.document.setFlag(MODULE_ID, "pins", pins);
+      this.#getSocket()?.emit("pinUpdated", { pageId: this.document.id, pin: updatedPin });
+    } catch (err) {
+      ui.notifications.error("Failed to update pin.");
+      console.error("MCT | updatePin error:", err);
+    }
   }
 
   async #deletePin(pinId) {
-    const pins = (this.document.getFlag(MODULE_ID, "pins") || []).filter(p => p.id !== pinId);
-    await this.document.setFlag(MODULE_ID, "pins", pins);
-
-    this.#getSocket()?.emit("pinDeleted", { pageId: this.document.id, pinId });
+    try {
+      const pins = (this.document.getFlag(MODULE_ID, "pins") || []).filter(p => p.id !== pinId);
+      await this.document.setFlag(MODULE_ID, "pins", pins);
+      this.#getSocket()?.emit("pinDeleted", { pageId: this.document.id, pinId });
+    } catch (err) {
+      ui.notifications.error("Failed to delete pin.");
+      console.error("MCT | deletePin error:", err);
+    }
   }
 
   #openPinConfig(pin) {
@@ -343,9 +358,15 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
 
     const pageId = this.document.id;
 
+    // Defer re-renders while the user is actively dragging a pin
+    const safeRender = () => {
+      if (this.#dragPin) return;
+      this.render();
+    };
+
     this.#boundSocketHandlers.pinAdded = (payload) => {
       if (payload.pageId !== pageId) return;
-      this.render();
+      safeRender();
     };
     this.#boundSocketHandlers.pinMoved = (payload) => {
       if (payload.pageId !== pageId) return;
@@ -355,16 +376,16 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         pinEl.style.left = `${payload.x}%`;
         pinEl.style.top = `${payload.y}%`;
       } else {
-        this.render();
+        safeRender();
       }
     };
     this.#boundSocketHandlers.pinUpdated = (payload) => {
       if (payload.pageId !== pageId) return;
-      this.render();
+      safeRender();
     };
     this.#boundSocketHandlers.pinDeleted = (payload) => {
       if (payload.pageId !== pageId) return;
-      this.render();
+      safeRender();
     };
 
     for (const [type, handler] of Object.entries(this.#boundSocketHandlers)) {
