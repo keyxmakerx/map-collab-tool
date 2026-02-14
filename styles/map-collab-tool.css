@@ -154,15 +154,6 @@
   z-index: 20;
 }
 
-/* Suppress transitions and hover effects while dragging a pin */
-.mct-pin-dragging,
-.mct-pin-dragging:hover {
-  transform: translate(-50%, -100%);
-  transition: none;
-  z-index: 30;
-  cursor: grabbing;
-}
-
 .mct-pin i {
   font-size: 24px;
   color: var(--pin-color, #6b7280);

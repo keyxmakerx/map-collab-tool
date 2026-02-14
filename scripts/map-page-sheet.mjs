@@ -25,8 +25,6 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
   #panStartY = 0;
   #dragPin = null;
   #dragPinEl = null;
-  #dragPinStartX = 0;
-  #dragPinStartY = 0;
   #dragStartX = 0;
   #dragStartY = 0;
   #socketManager = null;
@@ -132,16 +130,14 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         this.#applyTransform(mapLayer);
       }
 
-      // Handle pin dragging — use delta from grab point for 1:1 cursor tracking
+      // Handle pin dragging
       if (this.#dragPin && this.#dragPinEl) {
         const rect = mapLayer.querySelector(".mct-map-image")?.getBoundingClientRect();
         if (!rect) return;
-        const dx = ((e.clientX - this.#dragStartX) / rect.width) * 100;
-        const dy = ((e.clientY - this.#dragStartY) / rect.height) * 100;
-        const x = Math.max(0, Math.min(100, this.#dragPinStartX + dx));
-        const y = Math.max(0, Math.min(100, this.#dragPinStartY + dy));
-        this.#dragPinEl.style.left = `${x}%`;
-        this.#dragPinEl.style.top = `${y}%`;
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        this.#dragPinEl.style.left = `${Math.max(0, Math.min(100, x))}%`;
+        this.#dragPinEl.style.top = `${Math.max(0, Math.min(100, y))}%`;
       }
     });
 
@@ -150,13 +146,10 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
       if (this.#dragPin) {
         const rect = mapLayer.querySelector(".mct-map-image")?.getBoundingClientRect();
         if (rect) {
-          const dx = ((e.clientX - this.#dragStartX) / rect.width) * 100;
-          const dy = ((e.clientY - this.#dragStartY) / rect.height) * 100;
-          const x = Math.max(0, Math.min(100, this.#dragPinStartX + dx));
-          const y = Math.max(0, Math.min(100, this.#dragPinStartY + dy));
+          const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+          const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
           await this.#movePin(this.#dragPin, x, y);
         }
-        this.#dragPinEl?.classList.remove("mct-pin-dragging");
         this.#dragPin = null;
         this.#dragPinEl = null;
         return;
@@ -244,11 +237,8 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
 
         this.#dragPin = pinId;
         this.#dragPinEl = pinEl;
-        this.#dragPinStartX = pin.x;
-        this.#dragPinStartY = pin.y;
         this.#dragStartX = e.clientX;
         this.#dragStartY = e.clientY;
-        pinEl.classList.add("mct-pin-dragging");
       });
 
       // Right-click to edit
