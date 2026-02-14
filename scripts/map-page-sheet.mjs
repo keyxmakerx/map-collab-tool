@@ -3,7 +3,9 @@ import { DEFAULT_PIN_TYPES } from "./module.mjs";
 
 const MODULE_ID = "map-collab-tool";
 
-export class MapPageSheet extends foundry.applications.sheets.journal.JournalEntryPageSheet {
+const { HandlebarsApplicationMixin } = foundry.applications.api;
+
+export class MapPageSheet extends HandlebarsApplicationMixin(foundry.applications.sheets.journal.JournalEntryPageSheet) {
 
   static DEFAULT_OPTIONS = {
     classes: ["mct-map-sheet"]
