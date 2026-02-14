@@ -5,9 +5,7 @@
       <label>{{localize "MCT.MapPage.PinType"}}:</label>
       <select class="mct-pin-type-select">
         {{#each pinTypes}}
-        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>
-          <i class="fa-solid {{this.icon}}"></i> {{this.label}}
-        </option>
+        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
         {{/each}}
       </select>
     </div>

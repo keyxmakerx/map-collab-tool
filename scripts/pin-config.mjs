@@ -6,8 +6,7 @@ export class PinConfigDialog extends foundry.applications.api.HandlebarsApplicat
   foundry.applications.api.ApplicationV2
 ) {
   static DEFAULT_OPTIONS = {
-    id: "mct-pin-config",
-    tag: "div",
+    tag: "form",
     window: {
       title: "MCT.PinConfig.Title",
       icon: "fa-solid fa-map-pin",
@@ -18,7 +17,7 @@ export class PinConfigDialog extends foundry.applications.api.HandlebarsApplicat
       height: "auto"
     },
     form: {
-      handler: PinConfigDialog.#onSubmit,
+      handler: PinConfigDialog._onSubmit,
       submitOnChange: false,
       closeOnSubmit: true
     }
@@ -30,35 +29,35 @@ export class PinConfigDialog extends foundry.applications.api.HandlebarsApplicat
     }
   };
 
-  #pin;
-  #pageId;
-  #onSave;
-  #onDelete;
+  _pin;
+  _pageId;
+  _onSave;
+  _onDelete;
 
   constructor(pin, pageId, { onSave, onDelete } = {}) {
     super();
-    this.#pin = pin;
-    this.#pageId = pageId;
-    this.#onSave = onSave;
-    this.#onDelete = onDelete;
+    this._pin = pin;
+    this._pageId = pageId;
+    this._onSave = onSave;
+    this._onDelete = onDelete;
   }
 
   async _prepareContext() {
-    const pinTypes = this.#getPinTypes().map(pt => ({
+    const pinTypes = this._getPinTypes().map(pt => ({
       ...pt,
-      selected: pt.id === this.#pin.type
+      selected: pt.id === this._pin.type
     }));
     return {
-      label: this.#pin.label || "",
-      shared: this.#pin.shared !== false,
+      label: this._pin.label || "",
+      shared: this._pin.shared !== false,
       pinTypes
     };
   }
 
-  #getPinTypes() {
+  _getPinTypes() {
     const page = game.journal
       ?.reduce((pages, j) => pages.concat(Array.from(j.pages)), [])
-      ?.find(p => p.id === this.#pageId);
+      ?.find(p => p.id === this._pageId);
     const custom = page?.getFlag(MODULE_ID, "pinTypes") || [];
     return [...DEFAULT_PIN_TYPES, ...custom];
   }
@@ -68,17 +67,17 @@ export class PinConfigDialog extends foundry.applications.api.HandlebarsApplicat
     const deleteBtn = this.element.querySelector(".mct-delete-pin");
     if (deleteBtn) {
       deleteBtn.addEventListener("click", () => {
-        if (this.#onDelete) this.#onDelete(this.#pin.id);
+        if (this._onDelete) this._onDelete(this._pin.id);
         this.close();
       });
     }
   }
 
-  static async #onSubmit(event, form, formData) {
+  static async _onSubmit(event, form, formData) {
     const data = foundry.utils.expandObject(formData.object);
-    if (this.#onSave) {
-      this.#onSave({
-        ...this.#pin,
+    if (this._onSave) {
+      this._onSave({
+        ...this._pin,
         label: data.label || "",
         type: data.type || "note",
         shared: !!data.shared
