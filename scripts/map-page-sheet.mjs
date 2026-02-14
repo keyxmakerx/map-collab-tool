@@ -132,12 +132,14 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         this.#applyTransform(mapLayer);
       }
 
-      // Handle pin dragging — use delta from grab point for 1:1 cursor tracking
+      // Handle pin dragging — convert screen-pixel delta to percentage using
+      // untransformed layout dimensions (offsetWidth/Height) and known zoom,
+      // avoiding getBoundingClientRect which can be skewed by ancestor transforms.
       if (this.#dragPin && this.#dragPinEl) {
-        const rect = mapLayer.querySelector(".mct-map-image")?.getBoundingClientRect();
-        if (!rect) return;
-        const dx = ((e.clientX - this.#dragStartX) / rect.width) * 100;
-        const dy = ((e.clientY - this.#dragStartY) / rect.height) * 100;
+        const pinsLayer = mapLayer.querySelector(".mct-pins-layer");
+        if (!pinsLayer || !pinsLayer.offsetWidth || !pinsLayer.offsetHeight) return;
+        const dx = ((e.clientX - this.#dragStartX) / this.#zoom / pinsLayer.offsetWidth) * 100;
+        const dy = ((e.clientY - this.#dragStartY) / this.#zoom / pinsLayer.offsetHeight) * 100;
         const x = Math.max(0, Math.min(100, this.#dragPinStartX + dx));
         const y = Math.max(0, Math.min(100, this.#dragPinStartY + dy));
         this.#dragPinEl.style.left = `${x}%`;
@@ -148,14 +150,15 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
     viewport.addEventListener("pointerup", async (e) => {
       // Finish pin drag
       if (this.#dragPin) {
-        const rect = mapLayer.querySelector(".mct-map-image")?.getBoundingClientRect();
-        if (rect) {
-          const dx = ((e.clientX - this.#dragStartX) / rect.width) * 100;
-          const dy = ((e.clientY - this.#dragStartY) / rect.height) * 100;
+        const pinsLayer = mapLayer.querySelector(".mct-pins-layer");
+        if (pinsLayer && pinsLayer.offsetWidth && pinsLayer.offsetHeight) {
+          const dx = ((e.clientX - this.#dragStartX) / this.#zoom / pinsLayer.offsetWidth) * 100;
+          const dy = ((e.clientY - this.#dragStartY) / this.#zoom / pinsLayer.offsetHeight) * 100;
           const x = Math.max(0, Math.min(100, this.#dragPinStartX + dx));
           const y = Math.max(0, Math.min(100, this.#dragPinStartY + dy));
           await this.#movePin(this.#dragPin, x, y);
         }
+        viewport.releasePointerCapture(e.pointerId);
         this.#dragPinEl?.classList.remove("mct-pin-dragging");
         this.#dragPin = null;
         this.#dragPinEl = null;
@@ -174,7 +177,8 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
           const mapImage = mapLayer.querySelector(".mct-map-image");
           if (mapImage && (pointerDownTarget === mapImage || mapImage.contains(pointerDownTarget))) {
             if (game.user.isGM || game.settings.get(MODULE_ID, "enableForPlayers")) {
-              const rect = mapImage.getBoundingClientRect();
+              const pinsLayer = mapLayer.querySelector(".mct-pins-layer");
+              const rect = pinsLayer?.getBoundingClientRect() || mapImage.getBoundingClientRect();
               const x = ((e.clientX - rect.left) / rect.width) * 100;
               const y = ((e.clientY - rect.top) / rect.height) * 100;
               await this.#addPin(x, y);
@@ -187,7 +191,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
     });
 
     // Pin interactions (drag + right-click)
-    this.#setupPinListeners(mapLayer);
+    this.#setupPinListeners(mapLayer, viewport);
 
     // Toolbar buttons
     this.element.querySelector(".mct-zoom-in")?.addEventListener("click", () => {
@@ -227,7 +231,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
     mapLayer.style.transform = `translate(${this.#panX}px, ${this.#panY}px) scale(${this.#zoom})`;
   }
 
-  #setupPinListeners(mapLayer) {
+  #setupPinListeners(mapLayer, viewport) {
     const pins = mapLayer.querySelectorAll(".mct-pin");
     for (const pinEl of pins) {
       const pinId = pinEl.dataset.pinId;
@@ -249,6 +253,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         this.#dragStartX = e.clientX;
         this.#dragStartY = e.clientY;
         pinEl.classList.add("mct-pin-dragging");
+        viewport.setPointerCapture(e.pointerId);
       });
 
       // Right-click to edit
