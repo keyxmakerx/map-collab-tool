@@ -39,6 +39,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
   #drawColor = "#ff0000";
   #activeDrawing = null;
   #activePolyline = null;
+  #drawPointsStr = "";  // accumulate SVG points string (avoids O(n^2) rebuild)
 
   // Socket
   #socketManager = null;
@@ -176,8 +177,10 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         this.#applyTransform(mapLayer);
       }
 
-      // Pin dragging
+      // Pin dragging — only move visually if user has edit permission
       if (this.#dragPin && this.#dragPinEl) {
+        const pin = this.#getPinById(this.#dragPin);
+        if (!pin || !this.#canEditPin(pin)) return;
         const rect = mapLayer.querySelector(".mct-pins-layer")?.getBoundingClientRect();
         if (!rect || !rect.width || !rect.height) return;
         const dx = ((e.clientX - this.#dragStartX) / rect.width) * 100;
@@ -298,6 +301,13 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
 
     // Clear drawings (GM only)
     this.element.querySelector(".mct-clear-drawings")?.addEventListener("click", async () => {
+      const drawings = this.document.getFlag(MODULE_ID, "drawings") || [];
+      if (!drawings.length) return;
+      const confirmed = await Dialog.confirm({
+        title: game.i18n.localize("MCT.MapPage.ClearDrawings"),
+        content: `<p>${game.i18n.localize("MCT.Confirm.ClearDrawings")}</p>`
+      });
+      if (!confirmed) return;
       await this.document.setFlag(MODULE_ID, "drawings", []);
       this.#getSocket()?.emit("drawingsCleared", { pageId: this.document.id });
       this.render();
@@ -360,6 +370,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
       pinEl.addEventListener("dblclick", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        this.#dismissJournalPopup();
         const pin = this.#getPinById(pinId);
         if (pin?.linkedJournalId) {
           this.#openLinkedJournal(pin);
@@ -434,7 +445,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
 
   async #movePin(pinId, x, y) {
     const pin = this.#getPinById(pinId);
-    if (pin && !this.#canEditPin(pin)) return;
+    if (!pin || !this.#canEditPin(pin)) return;
 
     try {
       const rx = Math.round(x * 100) / 100;
@@ -497,12 +508,18 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
 
     const title = document.createElement("div");
     title.className = "mct-journal-popup-title";
-    title.innerHTML = `<i class="fa-solid fa-book-open"></i> ${page?.name || journal.name}`;
+    const titleIcon = document.createElement("i");
+    titleIcon.className = "fa-solid fa-book-open";
+    title.appendChild(titleIcon);
+    title.appendChild(document.createTextNode(` ${page?.name || journal.name}`));
     popup.appendChild(title);
 
     const openBtn = document.createElement("button");
     openBtn.className = "mct-journal-popup-open";
-    openBtn.innerHTML = `<i class="fa-solid fa-external-link-alt"></i> ${game.i18n.localize("MCT.JournalPopup.Open")}`;
+    const btnIcon = document.createElement("i");
+    btnIcon.className = "fa-solid fa-external-link-alt";
+    openBtn.appendChild(btnIcon);
+    openBtn.appendChild(document.createTextNode(` ${game.i18n.localize("MCT.JournalPopup.Open")}`));
     openBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       this.#openLinkedJournal(pin);
@@ -543,23 +560,27 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
     const rect = svgLayer.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const rx = Math.round(x * 10) / 10;
+    const ry = Math.round(y * 10) / 10;
 
     this.#activeDrawing = {
       id: foundry.utils.randomID(),
-      points: [{ x, y }],
+      points: [{ x: rx, y: ry }],
       color: this.#drawColor,
       size: 3,
       createdBy: game.user.id
     };
 
-    // Create live polyline in SVG
+    // Build points string incrementally (O(1) per point instead of O(n))
+    this.#drawPointsStr = `${rx},${ry}`;
+
     const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
     polyline.setAttribute("stroke", this.#drawColor);
     polyline.setAttribute("stroke-width", "0.3");
     polyline.setAttribute("fill", "none");
     polyline.setAttribute("stroke-linecap", "round");
     polyline.setAttribute("stroke-linejoin", "round");
-    polyline.setAttribute("points", `${x},${y}`);
+    polyline.setAttribute("points", this.#drawPointsStr);
     svgLayer.appendChild(polyline);
     this.#activePolyline = polyline;
   }
@@ -568,19 +589,30 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
     if (!this.#activeDrawing || !this.#activePolyline) return;
 
     const rect = svgLayer.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const x = Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10;
+    const y = Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10;
+
+    // Skip if the point hasn't moved enough (min ~0.3% of image dimension)
+    const last = this.#activeDrawing.points[this.#activeDrawing.points.length - 1];
+    const dx = x - last.x;
+    const dy = y - last.y;
+    if (dx * dx + dy * dy < 0.09) return;
 
     this.#activeDrawing.points.push({ x, y });
 
-    const pointsStr = this.#activeDrawing.points.map(p => `${p.x},${p.y}`).join(" ");
-    this.#activePolyline.setAttribute("points", pointsStr);
+    // Append to string (O(1)) instead of rebuilding (O(n))
+    this.#drawPointsStr += ` ${x},${y}`;
+    this.#activePolyline.setAttribute("points", this.#drawPointsStr);
   }
 
   async #finishDrawing() {
     if (!this.#activeDrawing) return;
 
-    // Only save if we have at least 2 points
+    // Simplify the path: remove points that are nearly collinear
+    if (this.#activeDrawing.points.length > 3) {
+      this.#activeDrawing.points = this.#simplifyPath(this.#activeDrawing.points, 0.15);
+    }
+
     if (this.#activeDrawing.points.length >= 2) {
       try {
         const drawings = [...(this.document.getFlag(MODULE_ID, "drawings") || []), this.#activeDrawing];
@@ -590,12 +622,52 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         console.error("MCT | drawing error:", err);
       }
     } else {
-      // Remove the polyline if too short
       this.#activePolyline?.remove();
     }
 
     this.#activeDrawing = null;
     this.#activePolyline = null;
+    this.#drawPointsStr = "";
+  }
+
+  // Ramer-Douglas-Peucker path simplification — reduces point count while preserving shape
+  #simplifyPath(points, epsilon) {
+    if (points.length <= 2) return points;
+
+    let maxDist = 0;
+    let maxIdx = 0;
+    const first = points[0];
+    const last = points[points.length - 1];
+    const dx = last.x - first.x;
+    const dy = last.y - first.y;
+    const lenSq = dx * dx + dy * dy;
+
+    for (let i = 1; i < points.length - 1; i++) {
+      let dist;
+      if (lenSq === 0) {
+        const ex = points[i].x - first.x;
+        const ey = points[i].y - first.y;
+        dist = Math.sqrt(ex * ex + ey * ey);
+      } else {
+        const t = Math.max(0, Math.min(1, ((points[i].x - first.x) * dx + (points[i].y - first.y) * dy) / lenSq));
+        const px = first.x + t * dx;
+        const py = first.y + t * dy;
+        const ex = points[i].x - px;
+        const ey = points[i].y - py;
+        dist = Math.sqrt(ex * ex + ey * ey);
+      }
+      if (dist > maxDist) {
+        maxDist = dist;
+        maxIdx = i;
+      }
+    }
+
+    if (maxDist > epsilon) {
+      const left = this.#simplifyPath(points.slice(0, maxIdx + 1), epsilon);
+      const right = this.#simplifyPath(points.slice(maxIdx), epsilon);
+      return left.slice(0, -1).concat(right);
+    }
+    return [first, last];
   }
 
   // ── Image ──

@@ -30,6 +30,8 @@
 
   "MCT.JournalPopup.Open": "Open Journal",
 
+  "MCT.Confirm.ClearDrawings": "Are you sure you want to clear all drawings from this map? This cannot be undone.",
+
   "MCT.Notifications.EditingEnabled": "Anyone can now edit items on this map.",
   "MCT.Notifications.EditingDisabled": "Only the GM and item creators can edit.",
 
