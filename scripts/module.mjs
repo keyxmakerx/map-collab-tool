@@ -1,64 +1,46 @@
-/**
- * Collaborative Map Tool - Main Module Entry Point
- * A system-agnostic collaborative drawing and annotation tool for Foundry VTT v13.
- */
-
-import { CollaborationLayer } from "./collaboration-layer.mjs";
 import { SocketManager } from "./socket-manager.mjs";
 import { registerSettings } from "./settings.mjs";
-import { registerSceneControls } from "./scene-controls.mjs";
-import { ColorPickerApp } from "./color-picker-app.mjs";
+import { MapPageSheet } from "./map-page-sheet.mjs";
 
 const MODULE_ID = "map-collab-tool";
 
-/**
- * Assigned player colors to avoid conflicts.
- * Falls back to the player's Foundry user color.
- */
-function getPlayerColor() {
-  return game.user.color?.toString() ?? "#ffffff";
-}
+export const DEFAULT_PIN_TYPES = [
+  { id: "location", label: "Location", icon: "fa-location-dot", color: "#3b82f6" },
+  { id: "danger", label: "Danger", icon: "fa-skull-crossbones", color: "#ef4444" },
+  { id: "treasure", label: "Treasure", icon: "fa-gem", color: "#f59e0b" },
+  { id: "quest", label: "Quest", icon: "fa-scroll", color: "#8b5cf6" },
+  { id: "note", label: "Note", icon: "fa-note-sticky", color: "#6b7280" }
+];
 
 Hooks.once("init", () => {
   console.log(`${MODULE_ID} | Initializing Collaborative Map Tool`);
 
-  // Register the custom canvas layer
-  CONFIG.Canvas.layers.collaboration = {
-    layerClass: CollaborationLayer,
-    group: "interface"
-  };
-
   // Register module settings
   registerSettings();
+
+  // Register the custom "map" journal page type
+  Object.assign(CONFIG.JournalEntryPage.typeLabels, {
+    "map": "MCT.PageType.Map"
+  });
+
+  // Register the MapPageSheet for our custom page type
+  DocumentSheetConfig.registerSheet(JournalEntryPage, MODULE_ID, MapPageSheet, {
+    types: ["map"],
+    makeDefault: true,
+    label: "MCT.MapPage.SheetLabel"
+  });
 });
 
 Hooks.once("ready", () => {
   console.log(`${MODULE_ID} | Ready`);
 
-  // Initialize socket communication
-  const socketManager = new SocketManager(MODULE_ID);
-  game.modules.get(MODULE_ID).socketManager = socketManager;
-  game.modules.get(MODULE_ID).api = {
-    getLayer: () => canvas.collaboration,
+  const socketManager = new SocketManager();
+  const mod = game.modules.get(MODULE_ID);
+  mod.socketManager = socketManager;
+  mod.api = {
     getSocketManager: () => socketManager,
-    getPlayerColor
+    DEFAULT_PIN_TYPES
   };
-});
-
-// Register scene control buttons (v13 object-based API)
-Hooks.on("getSceneControlButtons", (controls) => {
-  registerSceneControls(controls);
-});
-
-// When the canvas is ready, set up event listeners on our layer
-Hooks.on("canvasReady", () => {
-  const layer = canvas.collaboration;
-  if (layer) {
-    const socketManager = game.modules.get(MODULE_ID)?.socketManager;
-    if (socketManager) {
-      layer.setSocketManager(socketManager);
-    }
-  }
 });
 
 export { MODULE_ID };

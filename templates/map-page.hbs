@@ -1,0 +1,65 @@
+<div class="mct-map-container">
+  {{!-- Toolbar --}}
+  <div class="mct-toolbar">
+    <div class="mct-toolbar-group">
+      <label>{{localize "MCT.MapPage.PinType"}}:</label>
+      <select class="mct-pin-type-select">
+        {{#each pinTypes}}
+        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>
+          <i class="fa-solid {{this.icon}}"></i> {{this.label}}
+        </option>
+        {{/each}}
+      </select>
+    </div>
+    <div class="mct-toolbar-group">
+      <button type="button" class="mct-zoom-in" title="{{localize "MCT.MapPage.ZoomIn"}}">
+        <i class="fa-solid fa-magnifying-glass-plus"></i>
+      </button>
+      <button type="button" class="mct-zoom-out" title="{{localize "MCT.MapPage.ZoomOut"}}">
+        <i class="fa-solid fa-magnifying-glass-minus"></i>
+      </button>
+      <button type="button" class="mct-zoom-reset" title="{{localize "MCT.MapPage.ZoomReset"}}">
+        <i class="fa-solid fa-compress"></i>
+      </button>
+    </div>
+    {{#if isGM}}
+    <div class="mct-toolbar-group">
+      <button type="button" class="mct-set-image" title="{{localize "MCT.MapPage.SetImage"}}">
+        <i class="fa-solid fa-image"></i> {{localize "MCT.MapPage.SetImage"}}
+      </button>
+    </div>
+    {{/if}}
+  </div>
+
+  {{!-- Map viewport --}}
+  <div class="mct-viewport">
+    <div class="mct-map-layer" style="transform: scale({{zoom}}) translate({{panX}}px, {{panY}}px);">
+      {{#if mapImage}}
+      <img class="mct-map-image" src="{{mapImage}}" draggable="false" />
+      {{else}}
+      <div class="mct-no-image">
+        <i class="fa-solid fa-map"></i>
+        <p>{{localize "MCT.MapPage.NoImage"}}</p>
+        {{#if isGM}}
+        <button type="button" class="mct-set-image">
+          <i class="fa-solid fa-image"></i> {{localize "MCT.MapPage.SetImage"}}
+        </button>
+        {{/if}}
+      </div>
+      {{/if}}
+
+      {{!-- Pin overlay --}}
+      <div class="mct-pins-layer">
+        {{#each pins}}
+        <div class="mct-pin {{#if this.isPrivate}}mct-pin-private{{/if}}"
+             data-pin-id="{{this.id}}"
+             style="left: {{this.x}}%; top: {{this.y}}%; --pin-color: {{this.color}};"
+             title="{{this.label}}">
+          <i class="fa-solid {{this.icon}}"></i>
+          {{#if this.label}}<span class="mct-pin-label">{{this.label}}</span>{{/if}}
+        </div>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+</div>
