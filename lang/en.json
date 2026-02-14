@@ -2,6 +2,7 @@
   "MCT.Title": "Collaborative Map Tool",
 
   "MCT.PageType.Map": "Map",
+  "TYPES.JournalEntryPage.map-collab-tool.map": "Map",
 
   "MCT.MapPage.Title": "Map",
   "MCT.MapPage.SheetLabel": "Collaborative Map",

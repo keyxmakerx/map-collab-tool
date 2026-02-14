@@ -28,17 +28,12 @@ Hooks.once("init", () => {
   // Register module settings
   registerSettings();
 
-  // Register the custom "map" journal page type
-  Object.assign(CONFIG.JournalEntryPage.typeLabels, {
-    "map": "MCT.PageType.Map"
-  });
-
-  // Register the data model so Foundry recognizes "map" as a valid page type
-  CONFIG.JournalEntryPage.dataModels.map = MapPageData;
+  // Register the data model for our custom "map" page type (prefixed with module ID)
+  CONFIG.JournalEntryPage.dataModels[`${MODULE_ID}.map`] = MapPageData;
 
   // Register the MapPageSheet for our custom page type
   DocumentSheetConfig.registerSheet(JournalEntryPage, MODULE_ID, MapPageSheet, {
-    types: ["map"],
+    types: [`${MODULE_ID}.map`],
     makeDefault: true,
     label: "MCT.MapPage.SheetLabel"
   });
