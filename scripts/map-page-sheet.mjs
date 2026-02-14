@@ -99,13 +99,22 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
       this.#applyTransform(mapLayer);
     }, { passive: false });
 
-    // Middle-click pan
+    // Unified pointer handling: left-click drag = pan, left-click (no drag) on image = place pin
+    const DRAG_THRESHOLD = 5; // px — movement beyond this counts as a drag, not a click
+    let pointerDownTarget = null;
+
     viewport.addEventListener("pointerdown", (e) => {
-      if (e.button === 1) {
+      if (e.button === 0 || e.button === 1) {
+        // Don't start a pan if we're dragging a pin
+        if (this.#dragPin) return;
+
         e.preventDefault();
         this.#isPanning = true;
         this.#panStartX = e.clientX - this.#panX;
         this.#panStartY = e.clientY - this.#panY;
+        this.#dragStartX = e.clientX;
+        this.#dragStartY = e.clientY;
+        pointerDownTarget = e.target;
         viewport.setPointerCapture(e.pointerId);
       }
     });
@@ -132,12 +141,6 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
     });
 
     viewport.addEventListener("pointerup", async (e) => {
-      if (this.#isPanning) {
-        this.#isPanning = false;
-        viewport.releasePointerCapture(e.pointerId);
-        return;
-      }
-
       // Finish pin drag
       if (this.#dragPin) {
         const rect = mapLayer.querySelector(".mct-map-image")?.getBoundingClientRect();
@@ -149,23 +152,30 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         this.#dragPin = null;
         return;
       }
+
+      if (this.#isPanning) {
+        this.#isPanning = false;
+        viewport.releasePointerCapture(e.pointerId);
+
+        // Check if this was a click (not a drag) on the map image
+        const dx = Math.abs(e.clientX - this.#dragStartX);
+        const dy = Math.abs(e.clientY - this.#dragStartY);
+        if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD && e.button === 0) {
+          // It was a click, not a drag — place a pin if on the image
+          const mapImage = mapLayer.querySelector(".mct-map-image");
+          if (mapImage && (pointerDownTarget === mapImage || mapImage.contains(pointerDownTarget))) {
+            if (game.user.isGM || game.settings.get(MODULE_ID, "enableForPlayers")) {
+              const rect = mapImage.getBoundingClientRect();
+              const x = ((e.clientX - rect.left) / rect.width) * 100;
+              const y = ((e.clientY - rect.top) / rect.height) * 100;
+              await this.#addPin(x, y);
+            }
+          }
+        }
+        pointerDownTarget = null;
+        return;
+      }
     });
-
-    // Click on map to place pin (left click on the image itself)
-    const mapImage = mapLayer.querySelector(".mct-map-image");
-    if (mapImage) {
-      mapImage.addEventListener("click", async (e) => {
-        if (this.#isPanning || this.#dragPin) return;
-
-        // Check if players are allowed
-        if (!game.user.isGM && !game.settings.get(MODULE_ID, "enableForPlayers")) return;
-
-        const rect = mapImage.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        await this.#addPin(x, y);
-      });
-    }
 
     // Pin interactions (drag + right-click)
     this.#setupPinListeners(mapLayer);
@@ -205,7 +215,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
   }
 
   #applyTransform(mapLayer) {
-    mapLayer.style.transform = `scale(${this.#zoom}) translate(${this.#panX}px, ${this.#panY}px)`;
+    mapLayer.style.transform = `translate(${this.#panX}px, ${this.#panY}px) scale(${this.#zoom})`;
   }
 
   #setupPinListeners(mapLayer) {
