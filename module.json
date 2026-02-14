@@ -1,0 +1,32 @@
+{
+  "id": "map-collab-tool",
+  "title": "Collaborative Map Tool",
+  "description": "A system-agnostic collaborative map annotation tool that allows all players to draw, annotate, and point on the shared battle map in real-time.",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "map-collab-tool contributors"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "esmodules": [
+    "scripts/module.mjs"
+  ],
+  "styles": [
+    "styles/map-collab-tool.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "socket": true,
+  "url": "https://github.com/keyxmakerx/map-collab-tool",
+  "readme": "README.md",
+  "license": "MIT"
+}
