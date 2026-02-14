@@ -1,0 +1,22 @@
+{
+  "MCT.Title": "Collaborative Map Tool",
+  "MCT.Controls.Title": "Collaboration Tools",
+  "MCT.Tools.Pointer": "Pointer",
+  "MCT.Tools.Freehand": "Freehand Draw",
+  "MCT.Tools.Rectangle": "Rectangle",
+  "MCT.Tools.Ellipse": "Ellipse",
+  "MCT.Tools.Line": "Line",
+  "MCT.Tools.Text": "Text",
+  "MCT.Tools.Clear": "Clear My Drawings",
+  "MCT.Tools.ClearAll": "Clear All Drawings",
+  "MCT.Settings.EnableForPlayers.Name": "Enable for Players",
+  "MCT.Settings.EnableForPlayers.Hint": "Allow players to use the collaborative drawing tools.",
+  "MCT.Settings.ShowCursors.Name": "Show Player Cursors",
+  "MCT.Settings.ShowCursors.Hint": "Display other players' cursor positions in real-time.",
+  "MCT.Settings.DefaultColor.Name": "Default Draw Color",
+  "MCT.Settings.DefaultColor.Hint": "Default color used for new drawings. Each player can override.",
+  "MCT.Settings.StrokeWidth.Name": "Stroke Width",
+  "MCT.Settings.StrokeWidth.Hint": "Default stroke width for drawings.",
+  "MCT.Settings.PersistDrawings.Name": "Persist Drawings",
+  "MCT.Settings.PersistDrawings.Hint": "Save finished drawings as Foundry Drawing documents so they persist across sessions."
+}

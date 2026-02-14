@@ -1,0 +1,21 @@
+<div class="mct-color-picker">
+  <div class="mct-palette">
+    {{#each colors}}
+    <div class="mct-color-swatch{{#if (eq this ../currentColor)}} active{{/if}}"
+         data-color="{{this}}"
+         style="background-color: {{this}};"
+         title="{{this}}">
+    </div>
+    {{/each}}
+  </div>
+
+  <div class="mct-custom-color">
+    <label for="mct-custom-color">Custom:</label>
+    <input type="color" id="mct-custom-color" value="{{currentColor}}" />
+  </div>
+
+  <div class="mct-stroke-width">
+    <label for="mct-stroke-width">Width: {{strokeWidth}}px</label>
+    <input type="range" id="mct-stroke-width" min="1" max="20" step="1" value="{{strokeWidth}}" />
+  </div>
+</div>
