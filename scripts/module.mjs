@@ -4,6 +4,16 @@ import { MapPageSheet } from "./map-page-sheet.mjs";
 
 const MODULE_ID = "map-collab-tool";
 
+/**
+ * Data model for the custom "map" journal page type.
+ * Required by Foundry v12+ for the type to appear in the Add Page dropdown.
+ */
+class MapPageData extends foundry.abstract.TypeDataModel {
+  static defineSchema() {
+    return {};
+  }
+}
+
 export const DEFAULT_PIN_TYPES = [
   { id: "location", label: "Location", icon: "fa-location-dot", color: "#3b82f6" },
   { id: "danger", label: "Danger", icon: "fa-skull-crossbones", color: "#ef4444" },
@@ -22,6 +32,9 @@ Hooks.once("init", () => {
   Object.assign(CONFIG.JournalEntryPage.typeLabels, {
     "map": "MCT.PageType.Map"
   });
+
+  // Register the data model so Foundry recognizes "map" as a valid page type
+  CONFIG.JournalEntryPage.dataModels.map = MapPageData;
 
   // Register the MapPageSheet for our custom page type
   DocumentSheetConfig.registerSheet(JournalEntryPage, MODULE_ID, MapPageSheet, {
