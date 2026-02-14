@@ -177,8 +177,10 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
         this.#applyTransform(mapLayer);
       }
 
-      // Pin dragging
+      // Pin dragging — only move visually if user has edit permission
       if (this.#dragPin && this.#dragPinEl) {
+        const pin = this.#getPinById(this.#dragPin);
+        if (!pin || !this.#canEditPin(pin)) return;
         const rect = mapLayer.querySelector(".mct-pins-layer")?.getBoundingClientRect();
         if (!rect || !rect.width || !rect.height) return;
         const dx = ((e.clientX - this.#dragStartX) / rect.width) * 100;
@@ -299,6 +301,13 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
 
     // Clear drawings (GM only)
     this.element.querySelector(".mct-clear-drawings")?.addEventListener("click", async () => {
+      const drawings = this.document.getFlag(MODULE_ID, "drawings") || [];
+      if (!drawings.length) return;
+      const confirmed = await Dialog.confirm({
+        title: game.i18n.localize("MCT.MapPage.ClearDrawings"),
+        content: `<p>${game.i18n.localize("MCT.Confirm.ClearDrawings")}</p>`
+      });
+      if (!confirmed) return;
       await this.document.setFlag(MODULE_ID, "drawings", []);
       this.#getSocket()?.emit("drawingsCleared", { pageId: this.document.id });
       this.render();
@@ -361,6 +370,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
       pinEl.addEventListener("dblclick", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        this.#dismissJournalPopup();
         const pin = this.#getPinById(pinId);
         if (pin?.linkedJournalId) {
           this.#openLinkedJournal(pin);
@@ -435,7 +445,7 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
 
   async #movePin(pinId, x, y) {
     const pin = this.#getPinById(pinId);
-    if (pin && !this.#canEditPin(pin)) return;
+    if (!pin || !this.#canEditPin(pin)) return;
 
     try {
       const rx = Math.round(x * 100) / 100;
@@ -498,12 +508,18 @@ export class MapPageSheet extends HandlebarsApplicationMixin(foundry.application
 
     const title = document.createElement("div");
     title.className = "mct-journal-popup-title";
-    title.innerHTML = `<i class="fa-solid fa-book-open"></i> ${page?.name || journal.name}`;
+    const titleIcon = document.createElement("i");
+    titleIcon.className = "fa-solid fa-book-open";
+    title.appendChild(titleIcon);
+    title.appendChild(document.createTextNode(` ${page?.name || journal.name}`));
     popup.appendChild(title);
 
     const openBtn = document.createElement("button");
     openBtn.className = "mct-journal-popup-open";
-    openBtn.innerHTML = `<i class="fa-solid fa-external-link-alt"></i> ${game.i18n.localize("MCT.JournalPopup.Open")}`;
+    const btnIcon = document.createElement("i");
+    btnIcon.className = "fa-solid fa-external-link-alt";
+    openBtn.appendChild(btnIcon);
+    openBtn.appendChild(document.createTextNode(` ${game.i18n.localize("MCT.JournalPopup.Open")}`));
     openBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       this.#openLinkedJournal(pin);
