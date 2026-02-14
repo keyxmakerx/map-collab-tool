@@ -9,6 +9,14 @@
         {{/each}}
       </select>
     </div>
+
+    <div class="mct-toolbar-group">
+      <button type="button" class="mct-draw-toggle {{#if isDrawing}}active{{/if}}" title="{{localize "MCT.MapPage.DrawToggle"}}">
+        <i class="fa-solid fa-pencil"></i>
+      </button>
+      <input type="color" class="mct-draw-color" value="{{drawColor}}" title="{{localize "MCT.MapPage.DrawColor"}}" />
+    </div>
+
     <div class="mct-toolbar-group">
       <button type="button" class="mct-zoom-in" title="{{localize "MCT.MapPage.ZoomIn"}}" aria-label="{{localize "MCT.MapPage.ZoomIn"}}">
         <i class="fa-solid fa-magnifying-glass-plus"></i>
@@ -20,10 +28,21 @@
         <i class="fa-solid fa-compress"></i>
       </button>
     </div>
+
     {{#if isGM}}
     <div class="mct-toolbar-group">
       <button type="button" class="mct-set-image" title="{{localize "MCT.MapPage.SetImage"}}">
         <i class="fa-solid fa-image"></i> {{localize "MCT.MapPage.SetImage"}}
+      </button>
+    </div>
+    <div class="mct-toolbar-group">
+      <button type="button" class="mct-permissions-toggle {{#if anyoneCanEdit}}active{{/if}}" title="{{localize "MCT.MapPage.PermissionsToggle"}}">
+        <i class="fa-solid fa-lock-open"></i> {{localize "MCT.MapPage.PermissionsToggle"}}
+      </button>
+    </div>
+    <div class="mct-toolbar-group">
+      <button type="button" class="mct-clear-drawings" title="{{localize "MCT.MapPage.ClearDrawings"}}">
+        <i class="fa-solid fa-eraser"></i> {{localize "MCT.MapPage.ClearDrawings"}}
       </button>
     </div>
     {{/if}}
@@ -35,16 +54,39 @@
       {{#if mapImage}}
       <div class="mct-map-image-wrapper">
         <img class="mct-map-image" src="{{mapImage}}" alt="Map" draggable="false" />
+
+        {{!-- Drawing SVG layer --}}
+        <svg class="mct-drawing-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+          {{#each drawings}}
+          <polyline data-drawing-id="{{this.id}}"
+                    points="{{this.svgPoints}}"
+                    stroke="{{this.color}}"
+                    stroke-width="{{this.strokeWidth}}"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+          {{/each}}
+        </svg>
+
         {{!-- Pin overlay (sized to the image) --}}
         <div class="mct-pins-layer">
           {{#each pins}}
-          <div class="mct-pin {{#if this.isPrivate}}mct-pin-private{{/if}}"
+          {{#if this.isText}}
+          <div class="mct-pin mct-pin-text {{#if this.isPrivate}}mct-pin-private{{/if}} {{#if this.hasLink}}mct-pin-linked{{/if}}"
+               data-pin-id="{{this.id}}"
+               style="left: {{this.x}}%; top: {{this.y}}%; --pin-color: {{this.color}};"
+               title="{{this.label}}">
+            <span class="mct-text-content">{{this.label}}</span>
+          </div>
+          {{else}}
+          <div class="mct-pin {{#if this.isPrivate}}mct-pin-private{{/if}} {{#if this.hasLink}}mct-pin-linked{{/if}}"
                data-pin-id="{{this.id}}"
                style="left: {{this.x}}%; top: {{this.y}}%; --pin-color: {{this.color}};"
                title="{{this.label}}">
             <i class="fa-solid {{this.icon}}"></i>
             {{#if this.label}}<span class="mct-pin-label">{{this.label}}</span>{{/if}}
           </div>
+          {{/if}}
           {{/each}}
         </div>
       </div>
@@ -60,5 +102,7 @@
       </div>
       {{/if}}
     </div>
+
+    {{!-- Journal popup (added dynamically via JS) --}}
   </div>
 </div>

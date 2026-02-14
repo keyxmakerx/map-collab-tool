@@ -13,7 +13,7 @@ export class PinConfigDialog extends foundry.applications.api.HandlebarsApplicat
       resizable: false
     },
     position: {
-      width: 320,
+      width: 360,
       height: "auto"
     },
     form: {
@@ -47,10 +47,30 @@ export class PinConfigDialog extends foundry.applications.api.HandlebarsApplicat
       ...pt,
       selected: pt.id === this._pin.type
     }));
+
+    // Build journal entries list for the link picker
+    const journals = [];
+    for (const journal of game.journal) {
+      for (const page of journal.pages) {
+        journals.push({
+          id: `${journal.id}.${page.id}`,
+          label: journal.pages.size > 1 ? `${journal.name} - ${page.name}` : journal.name,
+          selected: this._pin.linkedJournalId === journal.id && this._pin.linkedPageId === page.id
+        });
+      }
+    }
+    // Sort alphabetically
+    journals.sort((a, b) => a.label.localeCompare(b.label));
+
     return {
       label: this._pin.label || "",
       shared: this._pin.shared !== false,
-      pinTypes
+      pinTypes,
+      journals,
+      hasLinkedJournal: !!(this._pin.linkedJournalId && this._pin.linkedPageId),
+      linkedJournalRef: this._pin.linkedJournalId
+        ? `${this._pin.linkedJournalId}.${this._pin.linkedPageId}`
+        : ""
     };
   }
 
@@ -71,17 +91,39 @@ export class PinConfigDialog extends foundry.applications.api.HandlebarsApplicat
         this.close();
       });
     }
+
+    // Clear journal link button
+    const clearBtn = this.element.querySelector(".mct-clear-journal-link");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => {
+        const select = this.element.querySelector("[name='linkedJournal']");
+        if (select) select.value = "";
+      });
+    }
   }
 
   static async _onSubmit(event, form, formData) {
     const data = foundry.utils.expandObject(formData.object);
     if (this._onSave) {
-      this._onSave({
+      const updated = {
         ...this._pin,
         label: data.label || "",
         type: data.type || "note",
         shared: !!data.shared
-      });
+      };
+
+      // Handle journal link
+      const ref = data.linkedJournal || "";
+      if (ref) {
+        const [journalId, pageId] = ref.split(".");
+        updated.linkedJournalId = journalId;
+        updated.linkedPageId = pageId;
+      } else {
+        delete updated.linkedJournalId;
+        delete updated.linkedPageId;
+      }
+
+      this._onSave(updated);
     }
   }
 }
