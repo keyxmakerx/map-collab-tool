@@ -27,8 +27,8 @@
   ],
   "socket": true,
   "url": "https://github.com/keyxmakerx/map-collab-tool",
-  "manifest": "https://raw.githubusercontent.com/keyxmakerx/map-collab-tool/main/module.json",
-  "download": "https://github.com/keyxmakerx/map-collab-tool/archive/refs/heads/main.zip",
+  "manifest": "https://raw.githubusercontent.com/keyxmakerx/map-collab-tool/claude/foundry-collaborative-map-tool-wLHwy/module.json",
+  "download": "https://github.com/keyxmakerx/map-collab-tool/archive/refs/heads/claude/foundry-collaborative-map-tool-wLHwy.zip",
   "readme": "README.md",
   "license": "MIT"
 }
