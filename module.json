@@ -2,7 +2,7 @@
   "id": "map-collab-tool",
   "title": "Collaborative Map Tool",
   "description": "A system-agnostic interactive map journal page where players can place, move, and manage pins collaboratively in real-time.",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "authors": [
     {
       "name": "map-collab-tool contributors"
